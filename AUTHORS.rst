@@ -7,11 +7,8 @@ contributors:
 - `Ben Powell <https://github.com/bpowell65536>`_
 - `Hynek Schlawack <https://github.com/hynek>`_
 - `Matt Montag <https://github.com/mmontag>`_
-<<<<<<< HEAD
 - `Pierre Tardy  <https://github.com/tardyp>`_
-=======
 - `Piët Delport <https://github.com/pjdelport>`_
 
->>>>>>> upstream/master
 
 .. _`Lynn Root`: https://github.com/econchick

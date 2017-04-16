@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
-<<<<<<< HEAD:tests/unit/utils/test_init.py
-# Copyright (c) 2016 Spotify AB
-from __future__ import absolute_import, division, print_function
-=======
 # Copyright (c) 2015 Spotify AB
->>>>>>> upstream/master:tests/test_utils.py
+
 
 import json
 import os
