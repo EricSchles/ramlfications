@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
+<<<<<<< HEAD:tests/unit/utils/test_init.py
 # Copyright (c) 2016 Spotify AB
 from __future__ import absolute_import, division, print_function
+=======
+# Copyright (c) 2015 Spotify AB
+>>>>>>> upstream/master:tests/test_utils.py
 
 import json
 import os
@@ -20,6 +24,9 @@ from tests.base import RAML_08, UPDATE
 # TODO: write tests, and associated error/failure tests
 #####
 
+
+if sys.version_info[0] == 2:
+    from io import open
 
 if sys.version_info[0] == 2:
     from io import open
@@ -182,6 +189,7 @@ def test_update_mime_types(
         mock_downloaded_url,
         downloaded_xml,
         expected_data):
+<<<<<<< HEAD:tests/unit/utils/test_init.py
 
     with open(downloaded_xml, encoding="UTF-8") as f:
         mock_downloaded_url.return_value = f.read()
@@ -191,6 +199,17 @@ def test_update_mime_types(
     mock_downloaded_url.assert_called_once_with(
         'https://www.iana.org/assignments/media-types/media-types.xml')
 
+=======
+
+    with open(downloaded_xml, encoding="UTF-8") as f:
+        mock_downloaded_url.return_value = f.read()
+
+    utils.update_mime_types()
+
+    mock_downloaded_url.assert_called_once_with(
+        'https://www.iana.org/assignments/media-types/media-types.xml')
+
+>>>>>>> upstream/master:tests/test_utils.py
     expected_save_path = os.path.realpath(os.path.join(
         os.path.dirname(utils.__file__),
         'data/supported_mime_types.json'))
