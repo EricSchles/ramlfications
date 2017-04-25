@@ -55,7 +55,8 @@ def parse_type(name, raw, root):
     data["display_name"] = raw.get("displayName", name)
     # TODO: what to do when it's a list?
     data["type"] = declared_type
-
+    import code
+    code.interact(local=locals())
     # TODO: super hacky, fixme
     if declared_type == "string":
         # TODO: prob want to clean this up, too

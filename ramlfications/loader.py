@@ -15,9 +15,9 @@ __all__ = ["RAMLLoader"]
 
 
 RAMLHEADER = "#%RAML "
-SUPPORTED_FRAGMENT_TYPES = ("DataType",)
-RAML10_FRAGMENT_TYPES = ("DataType", "AnnotationType")
-
+SUPPORTED_FRAGMENT_TYPES = ("DataType","Overlay")
+RAML10_FRAGMENT_TYPES = ("DataType", "AnnotationType","Overlay")
+#Added Overlay type.
 
 __all__ = ["RAMLLoader"]
 

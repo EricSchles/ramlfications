@@ -133,3 +133,11 @@ class AnnotationNode(BaseRAML):
     """
     API Root Node for 1.0 Annotation fragment files
     """
+
+@attr.s
+class OverlayNode(BaseRootNode):
+    """
+    API Root Node for 1.0 Overlay fragment files
+    """
+    extends = attr.ib(repr=False)
+    

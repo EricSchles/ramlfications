@@ -10,8 +10,8 @@ from ramlfications.errors import InvalidVersionError
 from ramlfications.utils.common import _get
 
 from .parser import RAMLParser
-from .types import create_root_data_type
-from .parser import RootParser
+from .types import create_root_data_type, create_overlay_data_type
+from .parser import RootParser, OverlayParser
 
 __all__ = ["parse_raml"]
 
@@ -53,3 +53,13 @@ def parse_raml(loaded_raml, config):
 
     if loaded_raml._raml_fragment_type == 'DataType':
         return create_root_data_type(loaded_raml, root)
+
+    #Is this the right thing to do?
+    #What I think this is doing:
+    #in the header, which starts with #%RAML 1.0
+    #I think that the fragment is anything that comes after this.
+    #That's why I look for Overlay in the fragment.
+    if loaded_raml._raml_fragment_type == "Overlay":
+        root_parser = OverlayParser(loaded_raml, config)
+        root = root_parser.create_node()
+        return create_overlay_data_type(loaded_raml, root)

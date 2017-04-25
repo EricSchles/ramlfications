@@ -104,8 +104,21 @@ class RAMLDataType(object):
     schema       = attr.ib(repr=False, default=None, validator=defined_schema)
     usage        = attr.ib(repr=False, default=None)
     xml          = attr.ib(repr=False, default=None)
+    
+#Have to rewrite parser?  At least handle this condition somehow, blarg.
+@attr.s
+class DataTypeOverlay(RAMLDataType):
+    """
+    Overlay class.
 
-
+    :param string name: name of the type
+    :param Content description: description for the type.
+        This is a markdown Content with on the fly conversion to html using
+        description.html
+    :type string base type for this type
+    """
+    extends      = attr.ib(repr=False, default=None)
+    
 @attr.s
 class DataTypeAttrs(object):
     """

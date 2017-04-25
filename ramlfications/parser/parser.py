@@ -17,11 +17,49 @@ from ramlfications.utils import load_schema, NodeList
 from ramlfications.utils.common import _map_attr
 from ramlfications.utils.parser import sort_uri_params
 from ramlfications.utils.types import parse_type
-
 from .base import BaseParser, BaseNodeParser
 from .mixins import NodeMixin
+from ramlfications.config import setup_config
+from ramlfications.utils import load_file, load_string
 
 parsers = []
+
+def load(raml_file):
+    """
+    Module helper function to load a RAML File using \
+    :py:class:`.loader.RAMLLoader`.
+
+    :param str raml_file: String path to RAML file
+    :return: loaded RAML
+    :rtype: dict
+    :raises LoadRAMLError: If error occurred trying to load the RAML file
+    """
+    return load_file(raml_file)
+
+def parse(raml, config_file=None):
+    """
+    Module helper function to parse a RAML File.  First loads the RAML file
+    with :py:class:`.loader.RAMLLoader` then parses with
+    :py:func:`.parser.parse_raml` to return a :py:class:`.raml.RAMLRoot`
+    object.
+
+    :param raml: Either string path to the RAML file, a file object, or \
+        a string representation of RAML.
+    :param str config_file:  String path to desired config file, if any.
+    :return: parsed API
+    :rtype: RAMLRoot
+    :raises LoadRAMLError: If error occurred trying to load the RAML file
+        (see :py:class:`.loader.RAMLLoader`)
+    :raises InvalidRootNodeError: API metadata is invalid according to RAML \
+        `specification <http://raml.org/spec.html>`_.
+    :raises InvalidResourceNodeError: API resource endpoint is invalid \
+        according to RAML `specification <http://raml.org/spec.html>`_.
+    :raises InvalidParameterError: Named parameter is invalid \
+        according to RAML `specification <http://raml.org/spec.html>`_.
+    """
+    loader = load(raml)
+    config = setup_config(config_file)
+    return parse_raml(loader, config)
 
 
 def collectparser(kls):
@@ -57,7 +95,125 @@ class RAMLParser(object):
         root.resources = resource_parser.create_nodes(nodes=NodeList())
         return root
 
+class OverlayParser(BaseParser):
+    """
+    Parses raw Overlay RAML data into a NodeAPI object.
 
+    :param dict data: raw Overlay RAML data
+    :param dict config: parser configuration
+
+    #Not sure what this should be yet - :ret: :py:class:`ramlfications.raml.RootNodeAPI` object
+    """
+    def __init__(self, data, config):
+        super(OverlayParser, self).__init__(data, config)
+        loaded_raml = load(self.extends())
+        root_parser = RootParser(loaded_raml, config)
+        self.root = root_parser.create_node() #the base RAML file we are overlaying
+        #self.root = parse(self.extends()) 
+        self.uri = self.root.base_uri #data.get comes from the base RAML file data.get("baseUri", "")
+        self.errors = []
+        self.base = None
+        self.raml_version = None
+
+    def extends(self):
+        return self.data.get("extends")
+
+    def usage(self):
+        return self.data.get("usage")
+
+    def protocols(self):
+        explicit_protos = self.data.get("protocols")
+        implicit_protos = re.findall(r"(https|http)", self.base_uri())
+        implicit_protos = [p.upper() for p in implicit_protos]
+
+        return explicit_protos or implicit_protos or None
+
+    def media_type(self):
+        return self.data.get("mediaType")
+
+    def base_uri(self):
+        base_uri = self.data.get("baseUri", "")
+        if "{version}" in base_uri:
+            version = str(self.data.get("version", ""))
+            base_uri = base_uri.replace("{version}", version)
+        return base_uri
+
+    def docs(self):
+        d = self.data.get("documentation", [])
+        assert isinstance(d, list), "Error parsing documentation"
+        docs = [Documentation(i.get("title"), i.get("content")) for i in d]
+        return docs or None
+
+    def schemas(self):
+        _schemas = self.data.get("schemas")
+        if not _schemas:
+            return None
+        schemas = []
+        for s in _schemas:
+            value = load_schema(list(itervalues(s))[0])
+            schemas.append({list(iterkeys(s))[0]: value})
+        return schemas or None
+    
+    def create_node_dict(self):
+        node_dict = {}
+        node_dict["raml_obj"] = self.data
+        node_dict["raw"] = self.data
+        node_dict["raml_version"] = self.data._raml_version
+        if self.data.get("title",""):
+            node_dict["title"] = self.data.get("title","")
+        else:
+            node_dict["title"] = self.root.raml_obj.get("title","")
+        if self.data.get("version",""):
+            node_dict["version"] = self.data.get("version","")
+        else:
+            node_dict["version"] = self.root.raml_obj.get("version","")
+        if self.data.get("protocols",""):
+            node_dict["protocols"] = self.protocols()
+        else:
+            node_dict["protocols"] = self.root.protocols
+        if self.data.get("base_uri",""):
+            node_dict["base_uri"] = self.base_uri()
+        else:
+            node_dict["base_uri"] = self.root.base_uri
+        node_dict["uri_params"] = self.create_param_objects("uriParameters")
+        if self.data.get("mediaType"):
+            node_dict["media_type"] = self.media_type()
+        else:
+            node_dict["media_type"] = self.root.media_type
+        if self.data.get("documentation",[]):
+             node_dict["documentation"] = self.docs()
+        else:
+            node_dict["documentation"] = self.root.documentation
+        if self.data.get("schemas"):
+            node_dict["schemas"] = self.schemas()
+        else:
+            node_dict["schemas"] = self.root.schemas
+        if self.data.get("securedBy"):
+            node_dict["secured_by"] = self.data.get("securedBy")
+        else:
+            node_dict["secured_by"] = self.root.secured_by
+        node_dict["config"] = self.config
+        node_dict["errors"] = self.errors
+        node_dict["base_uri_params"] = self.base
+        return node_dict
+
+    def create_node(self):
+        self.kw["data"] = self.data
+        self.kw["uri"] = self.uri
+        self.kw["method"] = None
+        self.kw["errs"] = self.errors
+        self.kw["conf"] = self.config
+
+        self.base = self.create_param_objects("baseUriParameters")
+        self.kw["base"] = self.base
+
+        node = self.create_node_dict()
+        #import code
+        #code.interact(local=locals())
+        return RAML_VERSION_LOOKUP[self.data._raml_version](**node)
+
+
+    
 class RootParser(BaseParser):
     """
     Parses raw RAML data into a RootNodeAPI object.
@@ -137,7 +293,8 @@ class RootParser(BaseParser):
         self.kw["base"] = self.base
 
         node = self.create_node_dict()
-
+        #import code
+        #code.interact(local=locals())
         return RAML_VERSION_LOOKUP[self.data._raml_version](**node)
 
 
@@ -510,3 +667,4 @@ class ResourceParser(BaseNodeParser, NodeMixin):
                 nodes = self.create_nodes(nodes, child)
 
         return nodes
+
