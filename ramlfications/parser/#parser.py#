@@ -95,7 +95,6 @@ class RAMLParser(object):
         root.resources = resource_parser.create_nodes(nodes=NodeList())
         return root
 
-@collectparser
 class OverlayParser(BaseParser):
     """
     Parses raw Overlay RAML data into a NodeAPI object.
@@ -105,11 +104,11 @@ class OverlayParser(BaseParser):
 
     #Not sure what this should be yet - :ret: :py:class:`ramlfications.raml.RootNodeAPI` object
     """
-    root_property = "overlay"
-    
-    def __init__(self, data, root, config):
+    def __init__(self, data, config):
         super(OverlayParser, self).__init__(data, config)
-        self.root = root #the base RAML file we are overlaying
+        loaded_raml = load(self.extends())
+        root_parser = RootParser(loaded_raml, config)
+        self.root = root_parser.create_node() #the base RAML file we are overlaying
         #self.root = parse(self.extends()) 
         self.uri = self.root.base_uri #data.get comes from the base RAML file data.get("baseUri", "")
         self.errors = []

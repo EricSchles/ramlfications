@@ -22,18 +22,18 @@ def create_root_data_type(raml, root, name=None):
         type=parse_type(name, raml, root)
     )
 
-def create_overlay_data_type(raml, root, name=None):
-    """
-    Creates a :py:class:`.raml.RootNodeDataType` based off of the RAML's root\
-        section.
+# def create_overlay_data_type(raml, root, name=None):
+#     """
+#     Creates a :py:class:`.raml.RootNodeDataType` based off of the RAML's root\
+#         section.
 
-    :param RAMLDict raml: loaded RAML file
-    :returns: :py:class:`.raml.RootNodeDataType` object with API root\
-        attributes set
-    """
+#     :param RAMLDict raml: loaded RAML file
+#     :returns: :py:class:`.raml.RootNodeDataType` object with API root\
+#         attributes set
+#     """
 
-    return OverlayNode(
-        raw=raml,
-        raml_version=raml._raml_version,
-        type=parse_type(name, raml, root)
-    )
+#     return OverlayNode(
+#         raw=raml,
+#         raml_version=raml._raml_version,
+#         type=parse_type(name, raml, root)
+#     )
